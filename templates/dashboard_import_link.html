@@ -1,0 +1,15 @@
+<!-- Import Document Dashboard Card -->
+<div class="col-md-6 col-lg-4 mb-4">
+    <div class="card h-100 border-primary">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Import Questions from Document</h5>
+        </div>
+        <div class="card-body d-flex flex-column">
+            <p class="card-text">Upload a document file (.docx or .pdf) to automatically extract questions for your quiz or exam.</p>
+            <p class="card-text"><small class="text-muted">Supports multiple choice, identification, true/false, and essay questions.</small></p>
+            <div class="mt-auto">
+                <a href="{{ url_for('import_document.import_document') }}" class="btn btn-primary">Import Document</a>
+            </div>
+        </div>
+    </div>
+</div>

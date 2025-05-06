@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Create Quiz/Exam</h2>
+    
+    <div class="card mb-4" id="step1Card" {% if session.quiz_setup %}style="display: none;"{% endif %}>
+        <div class="card-body">
+            <h5 class="card-title">Step 1: Set Quiz/Exam Details</h5>
+            <div class="mb-3">
+                <a href="{{ url_for('create_quiz', new=1) }}" class="btn btn-secondary">Start New Quiz/Exam</a>
+                {% if session.quiz_draft %}
+                <a href="{{ url_for('create_quiz', load_draft=1) }}" class="btn btn-info">Load Draft</a>
+                {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('create_quiz') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label for="quiz_title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="quiz_title" name="quiz_title" value="{{ draft.title if draft else '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="subject_id" class="form-label">Subject</label>
+                    <select class="form-control" id="subject_id" name="subject_id" required>
+                        {% for subject in current_user.subjects_taught %}
+                        <option value="{{ subject.id }}" {% if draft and draft.subject_id|string == subject.id|string %}selected{% endif %}>{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="quiz_type" class="form-label">Type</label>
+                    <select class="form-control" id="quiz_type" name="quiz_type" required>
+                        <option value="quiz" {% if draft and draft.quiz_type == 'quiz' %}selected{% endif %}>Quiz</option>
+                        <option value="exam" {% if draft and draft.quiz_type == 'exam' %}selected{% endif %}>Exam</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="question_count" class="form-label">Number of Questions</label>
+                    <input type="number" class="form-control" id="question_count" name="question_count" min="1" max="50" value="{{ draft.question_count if draft else '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description (Optional)</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ draft.description if draft else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Time Limit (minutes)</label>
+                    <input type="number" class="form-control" id="duration" name="duration" min="1" value="{{ draft.duration if draft else '' }}">
+                    <small class="text-muted">Leave empty for no time limit</small>
+                </div>
+                <div class="mb-3">
+                    <label for="start_time" class="form-label">Start Time (Optional)</label>
+                    <input type="datetime-local" class="form-control" id="start_time" name="start_time" value="{{ draft.start_time if draft else '' }}">
+                    <small class="text-muted">When the quiz/exam becomes available to students</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Continue to Add Questions</button>
+                    <button type="submit" name="save_draft" value="1" class="btn btn-secondary">Save as Draft</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if session.quiz_setup %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Step 2: Add Questions</h5>
+            <p>Quiz/Exam: <strong>{{ session.quiz_setup.title }}</strong></p>
+            <p>Questions to add: <strong>{{ session.quiz_setup.question_count }}</strong></p>
+            <p>Questions added: <strong>{{ session.quiz_setup.questions_added|default(0) }}/{{ session.quiz_setup.question_count }}</strong></p>
+            
+            {% if session.quiz_setup.questions_added < session.quiz_setup.question_count %}
+            <div class="alert alert-info">
+                Please add question #{{ session.quiz_setup.questions_added + 1 }}
+            </div>
+            
+            <form method="POST" action="{{ url_for('add_quiz_question') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group mb-3">
+                    <label for="question_text">Question Text</label>
+                    <textarea class="form-control" id="question_text" name="question_text" required></textarea>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="question_type">Question Type</label>
+                    <select class="form-control" id="question_type" name="question_type" required>
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="identification">Identification</option>
+                        <option value="true_false">True/False</option>
+                        <option value="essay">Essay</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label for="points">Points</label>
+                    <input type="number" class="form-control" id="points" name="points" value="1.0" min="0.1" step="0.1" required>
+                </div>
+                
+                <div id="question-options">
+                    <!-- Dynamic content based on question type will be loaded here -->
+                    <div class="multiple-choice-options">
+                        <div class="form-group mb-3">
+                            <label>Options</label>
+                            <div class="mb-2">
+                                <input type="text" class="form-control" name="options-0" placeholder="Option 1" required>
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" class="form-control" name="options-1" placeholder="Option 2" required>
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" class="form-control" name="options-2" placeholder="Option 3" required>
+                            </div>
+                            <div class="mb-2">
+                                <input type="text" class="form-control" name="options-3" placeholder="Option 4" required>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="correct_option">Correct Answer</label>
+                            <select class="form-control" id="correct_option" name="correct_option" required>
+                                <option value="0">Option 1</option>
+                                <option value="1">Option 2</option>
+                                <option value="2">Option 3</option>
+                                <option value="3">Option 4</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Add Question</button>
+            </form>
+            {% else %}
+            <div class="alert alert-success">
+                All questions have been added! Your quiz/exam is now ready.
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-success">Return to Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questionType = document.getElementById('question_type');
+    const optionsDiv = document.getElementById('question-options');
+    
+    if (questionType) {
+        questionType.addEventListener('change', function() {
+            updateQuestionOptions(this.value);
+        });
+    }
+    
+    function updateQuestionOptions(type) {
+        let html = '';
+        
+        if (type === 'multiple_choice') {
+            html = `
+                <div class="multiple-choice-options">
+                    <div class="form-group mb-3">
+                        <label>Options</label>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" name="options-0" placeholder="Option 1" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" name="options-1" placeholder="Option 2" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" name="options-2" placeholder="Option 3" required>
+                        </div>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" name="options-3" placeholder="Option 4" required>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="correct_option">Correct Answer</label>
+                        <select class="form-control" id="correct_option" name="correct_option" required>
+                            <option value="0">Option 1</option>
+                            <option value="1">Option 2</option>
+                            <option value="2">Option 3</option>
+                            <option value="3">Option 4</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'essay') {
+            html = `
+                <div class="essay-options">
+                    <div class="form-group mb-3">
+                        <label for="word_limit">Word Limit (Optional)</label>
+                        <input type="number" class="form-control" id="word_limit" name="word_limit" value="500" min="1">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="correct_answer">Sample Answer (For Teacher Reference Only)</label>
+                        <textarea class="form-control" id="correct_answer" name="correct_answer" rows="4"></textarea>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'identification') {
+            html = `
+                <div class="form-group mb-3">
+                    <label for="correct_answer">Correct Answer</label>
+                    <input type="text" class="form-control" id="correct_answer" name="correct_answer" required>
+                </div>
+            `;
+        } else if (type === 'true_false') {
+            html = `
+                <div class="form-group mb-3">
+                    <label>Correct Answer</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="correct_answer" id="correct_answer_true" value="true" checked>
+                        <label class="btn btn-outline-primary" for="correct_answer_true">True</label>
+                        
+                        <input type="radio" class="btn-check" name="correct_answer" id="correct_answer_false" value="false">
+                        <label class="btn btn-outline-primary" for="correct_answer_false">False</label>
+                    </div>
+                </div>
+            `;
+        }
+        
+        optionsDiv.innerHTML = html;
+    }
+});
+</script>
+{% endblock %}

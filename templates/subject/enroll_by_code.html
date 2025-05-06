@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Enroll by Subject Code{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Enroll in a Subject</h1>
+    <p class="lead">Enter the subject code provided by your teacher to enroll in a class.</p>
+    
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Subject Code Enrollment</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('subject.enroll_by_code') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <label for="subject_code" class="form-label">Subject Code</label>
+                    <input type="text" class="form-control" id="subject_code" name="subject_code" 
+                           placeholder="Enter the subject code" required>
+                    <div class="form-text">Enter the code exactly as provided by your teacher.</div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Enroll</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

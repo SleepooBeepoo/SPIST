@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Document{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="text-white">Import Questions from Document</h1>
+    <p class="lead text-white">Upload a document file (.docx or .pdf) to automatically extract questions for your quiz or exam.</p>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                {{ form.csrf_token }}
+                
+                <div class="mb-3">
+                    <h4>Quiz/Exam Details</h4>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control") }}
+                    {% if form.title.errors %}
+                        <div class="text-danger">
+                            {% for error in form.title.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", rows=3) }}
+                    {% if form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.quiz_type.label(class="form-label") }}
+                        {{ form.quiz_type(class="form-select") }}
+                        {% if form.quiz_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.quiz_type.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        {{ form.subject_id.label(class="form-label") }}
+                        {{ form.subject_id(class="form-select") }}
+                        {% if form.subject_id.errors %}
+                            <div class="text-danger">
+                                {% for error in form.subject_id.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.duration.label(class="form-label") }}
+                    {{ form.duration(class="form-control", type="number") }}
+                    <div class="form-text">Leave blank for unlimited time</div>
+                    {% if form.duration.errors %}
+                        <div class="text-danger">
+                            {% for error in form.duration.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4">
+                    <h4>Document Upload</h4>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.document_file.label(class="form-label") }}
+                    {{ form.document_file(class="form-control") }}
+                    <div class="form-text">Supported formats: .docx, .pdf</div>
+                    {% if form.document_file.errors %}
+                        <div class="text-danger">
+                            {% for error in form.document_file.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-4 form-check">
+                    {{ form.use_ai(class="form-check-input") }}
+                    {{ form.use_ai.label(class="form-check-label") }}
+                    <div class="form-text">Using AI may provide better question extraction but requires an API key to be configured</div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Import Document</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="alert alert-info">
+        <h5>Tips for Document Import</h5>
+        <ul>
+            <li>Format your document with clear question text</li>
+            <li>For multiple choice questions, list options with A), B), C), etc.</li>
+            <li>Mark correct answers clearly (e.g., "Correct: B" or "Answer: True")</li>
+            <li>Separate questions with blank lines or numbering</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Question</h2>
+    <form method="POST" action="{{ url_for('add_question', subject_id=subject_id) }}">
+        {{ form.hidden_tag() }}
+        <div class="form-group mb-3">
+            {{ form.question_text.label }} {{ form.question_text(class="form-control") }}
+            {% if form.question_text.errors %}
+                {% for error in form.question_text.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <div class="form-group mb-3">
+            {{ form.question_type.label }} {{ form.question_type(class="form-control") }}
+            {% if form.question_type.errors %}
+                {% for error in form.question_type.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        
+
+        {% if form.question_type.data == 'multiple_choice' and form.options is defined %}
+            <div class="form-group mb-3">
+                <label>Options</label>
+                {% for option in form.options %}
+                    <div class="mb-2">
+                        {{ option(class="form-control") }}
+                        {% if option.errors %}
+                            {% for error in option.errors %}
+                                <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            {% if form.correct_option is defined %}
+            <div class="form-group mb-3">
+                {{ form.correct_option.label }} {{ form.correct_option(class="form-control") }}
+                {% if form.correct_option.errors %}
+                    {% for error in form.correct_option.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endif %}
+        {% elif form.question_type.data == 'identification' and form.correct_answer is defined %}
+            <div class="form-group mb-3">
+                {{ form.correct_answer.label(class="form-label") }}
+                {{ form.correct_answer(class="form-control", placeholder="Enter the correct answer") }}
+                {% if form.correct_answer.errors %}
+                    {% for error in form.correct_answer.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% elif form.question_type.data == 'true_false' and form.correct_answer is defined %}
+            <div class="form-group mb-3">
+                {{ form.correct_answer.label(class="form-label d-block") }}
+                <div class="btn-group" role="group" aria-label="True/False options">
+                    {% for value, label in form.correct_answer.choices %}
+                        <input type="radio" class="btn-check" name="{{ form.correct_answer.name }}" id="{{ form.correct_answer.name }}_{{ value }}" value="{{ value }}" {% if form.correct_answer.data == value %}checked{% endif %}>
+                        <label class="btn btn-outline-primary" for="{{ form.correct_answer.name }}_{{ value }}">{{ label }}</label>
+                    {% endfor %}
+                </div>
+                {% if form.correct_answer.errors %}
+                    {% for error in form.correct_answer.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% elif form.question_type.data == 'essay' %}
+            <div class="form-group mb-3">
+                {{ form.word_limit.label(class="form-label") }}
+                {{ form.word_limit(class="form-control", placeholder="Maximum number of words (optional)") }}
+                {% if form.word_limit.errors %}
+                    {% for error in form.word_limit.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group mb-3">
+                {{ form.correct_answer.label(class="form-label") }}
+                {{ form.correct_answer(class="form-control", rows=4, placeholder="Enter a sample answer for reference (optional)") }}
+                <small class="text-muted">This sample answer is for your reference only and won't be shown to students.</small>
+                {% if form.correct_answer.errors %}
+                    {% for error in form.correct_answer.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary">Add Question</button>
+    </form>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.querySelector('form');
+        var questionType = document.getElementById('question_type');
+        var currentType = questionType.value;
+
+        questionType.addEventListener('change', function() {
+            var formData = new FormData(form);
+            formData.set('question_type', this.value);
+            
+            fetch(form.action + '?update_form=true', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                var newForm = tempDiv.querySelector('form');
+                if (newForm) {
+                    form.innerHTML = newForm.innerHTML;
+                    // Reattach event listener to the new question type select
+                    var newQuestionType = document.getElementById('question_type');
+                    if (newQuestionType) {
+                        newQuestionType.value = this.value;
+                        newQuestionType.addEventListener('change', arguments.callee);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error updating form:', error);
+            });
+        });
+    });
+    </script>
+</div>
+{% endblock %}

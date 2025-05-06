@@ -1,0 +1,4 @@
+# Document Import Dependencies
+python-docx==0.8.11
+PyPDF2==3.0.1
+openai==1.3.5  # Updated to latest version for better AI analysis capabilities

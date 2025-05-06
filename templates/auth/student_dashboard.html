@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Student Dashboard</h2>
+    
+    <!-- Announcements Section -->
+    {% if announcements %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Recent Notifications</h3>
+        </div>
+        <div class="card-body">
+            <div class="list-group">
+                {% for announcement in announcements %}
+                <div class="list-group-item {% if not announcement.is_read %}list-group-item-warning{% endif %}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ announcement.title }}</h5>
+                        <small>{{ announcement.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <p class="mb-1">{{ announcement.content }}</p>
+                    {% if not announcement.is_read %}
+                    <form action="{{ url_for('mark_announcement_read', announcement_id=announcement.id) }}" method="POST" class="mt-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">Mark as Read</button>
+                    </form>
+                    {% endif %}
+                    {% if announcement.quiz_id %}
+                    <a href="{{ url_for('view_quiz', quiz_id=announcement.quiz_id) }}" class="btn btn-sm btn-primary mt-2">View Quiz</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Subject Enrollment Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Enroll in a Subject</h3>
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('subject.enroll_subject') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="form-group">
+                    <label for="subject_code">Subject Code</label>
+                    <input type="text" class="form-control" id="subject_code" name="subject_code" required>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Enroll</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Enrolled Subjects -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Your Subjects</h3>
+        </div>
+        <div class="card-body">
+            {% if enrollments %}
+            <div class="list-group">
+                {% for enrollment in enrollments %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ enrollment.subject.name }}</h5>
+                        <small class="text-muted">Code: {{ enrollment.subject.subject_code }}</small>
+                    </div>
+                    {% if enrollment.enrollment_status == 'pending' %}
+                    <p class="text-warning">Status: Pending... Wait for your teacher's confirmation...</p>
+                    {% elif enrollment.enrollment_status == 'rejected' %}
+                    <p class="text-danger">Status: Enrollment request rejected</p>
+                    {% elif enrollment.enrollment_status == 'approved' %}
+                    <p class="text-success">Status: Enrolled</p>
+                    <a href="{{ url_for('subject.view_subject', subject_id=enrollment.subject.id) }}" class="btn btn-primary btn-sm mt-2">Access Subject</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>You are not enrolled in any subjects yet. Use the form above to enroll.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Assessment Submissions -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Assessment Submissions</h3>
+        </div>
+        <div class="card-body">
+            {% if quiz_submissions %}
+            <div class="list-group">
+                {% for submission in quiz_submissions %}
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ submission.quiz.title }}</h5>
+                        <small>{{ submission.quiz.quiz_type|title }}</small>
+                    </div>
+                    {% if submission.graded %}
+                        {% if submission.visible_to_students %}
+                            <p class="mb-1">Total Score: {{ submission.total_score }}/{{ submission.quiz.questions|map(attribute='points')|sum }}</p>
+                        {% endif %}
+                        {% if submission.feedback %}
+                            <p class="mb-1">Overall Feedback: {{ submission.feedback }}</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-warning mb-1">Pending...</p>
+                    {% endif %}
+                    <small>Submitted: {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No quiz submissions yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

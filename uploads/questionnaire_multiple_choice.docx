@@ -1,0 +1,31 @@
+# Computer Science Basics - Multiple Choice Questionnaire
+
+1. Which of the following is NOT a programming paradigm?
+A. Object-Oriented Programming
+B. Functional Programming
+C. Declarative Programming
+D. Algorithmic Structuring
+
+2. What does CPU stand for?
+A. Central Processing Unit
+B. Computer Processing Unit
+C. Central Program Utility
+D. Core Processing Unit
+
+3. Which data structure operates on a Last-In-First-Out (LIFO) principle?
+A. Queue
+B. Stack
+C. Linked List
+D. Array
+
+4. What is the time complexity of binary search in a sorted array?
+A. O(1)
+B. O(log n)
+C. O(n)
+D. O(n²)
+
+5. Which of the following is a statically-typed language?
+A. Python
+B. JavaScript
+C. Ruby
+D. Java

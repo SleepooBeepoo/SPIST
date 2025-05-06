@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Question</h2>
+    <form method="POST" class="mt-3">
+        {{ form.csrf_token }}
+        <div class="form-group">
+            {{ form.question_text.label }}
+            {{ form.question_text(class="form-control") }}
+            {% if form.question_text.errors %}
+                {% for error in form.question_text.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group mt-3">
+            {{ form.points.label }}
+            {{ form.points(class="form-control") }}
+            {% if form.points.errors %}
+                {% for error in form.points.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group mt-3">
+            {{ form.order_index.label }}
+            {{ form.order_index(class="form-control") }}
+            {% if form.order_index.errors %}
+                {% for error in form.order_index.errors %}
+                    <span class="text-danger">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        {% if question.question_type == 'multiple_choice' %}
+            {% for option in form.options %}
+            <div class="form-group mt-3">
+                {{ option.label }}
+                {{ option(class="form-control") }}
+                {% if option.errors %}
+                    {% for error in option.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-group mt-3">
+                {{ form.correct_option.label }}
+                {{ form.correct_option(class="form-control") }}
+                {% if form.correct_option.errors %}
+                    {% for error in form.correct_option.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% elif question.question_type in ['identification', 'true_false'] %}
+            <div class="form-group mt-3">
+                {{ form.correct_answer.label }}
+                {{ form.correct_answer(class="form-control") }}
+                {% if form.correct_answer.errors %}
+                    {% for error in form.correct_answer.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% elif question.question_type == 'enumeration' %}
+            {% for answer in form.answers %}
+            <div class="form-group mt-3">
+                {{ answer.label }}
+                {{ answer(class="form-control") }}
+                {% if answer.errors %}
+                    {% for error in answer.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="form-group mt-3">
+                {{ form.order_matters.label }}
+                {{ form.order_matters(class="form-check-input") }}
+            </div>
+        {% elif question.question_type == 'essay' %}
+            <div class="form-group mt-3">
+                {{ form.answer_guide.label }}
+                {{ form.answer_guide(class="form-control") }}
+                {% if form.answer_guide.errors %}
+                    {% for error in form.answer_guide.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group mt-3">
+                {{ form.min_words.label }}
+                {{ form.min_words(class="form-control") }}
+                {% if form.min_words.errors %}
+                    {% for error in form.min_words.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group mt-3">
+                {{ form.max_words.label }}
+                {{ form.max_words(class="form-control") }}
+                {% if form.max_words.errors %}
+                    {% for error in form.max_words.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Update Question</button>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary ml-2">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

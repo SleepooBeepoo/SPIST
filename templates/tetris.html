@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Tetris Game{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="mb-4">Tetris Game</h1>
+            <p>Use arrow keys to play: ← → to move, ↑ to rotate, ↓ to drop faster</p>
+            
+            <div class="d-flex justify-content-center mb-3">
+                <button id="start-button" class="btn btn-primary me-2">Start</button>
+                <button id="pause-button" class="btn btn-secondary me-2">Pause</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-dark">Back to Dashboard</a>
+            </div>
+            
+            <div class="d-flex justify-content-center mb-3">
+                <div class="me-4">
+                    <h5>Score: <span id="score">0</span></h5>
+                </div>
+            </div>
+            
+            <div class="game-container d-flex justify-content-center">
+                <canvas id="tetris" class="border border-dark"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/tetris.js') }}"></script>
+{% endblock %}

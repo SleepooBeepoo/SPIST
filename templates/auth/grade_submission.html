@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Grade {{ quiz_submission.quiz.quiz_type|title }} Submission</h2>
+    
+    <!-- Submission Overview Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">{{ quiz_submission.quiz.title }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Quiz Type:</strong> {{ quiz_submission.quiz.quiz_type|title }}</p>
+                    <p><strong>Student:</strong> {{ quiz_submission.student.username }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Submitted:</strong> {{ quiz_submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge {% if quiz_submission.graded %}bg-success{% else %}bg-warning{% endif %}">
+                            {% if quiz_submission.graded %}Graded{% else %}Pending{% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions and Answers Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h4 class="mb-0">Questions and Answers</h4>
+        </div>
+        <div class="card-body">
+            {% if quiz_submission.question_submissions %}
+                {% for submission in quiz_submission.question_submissions %}
+                <div class="card mb-4 question-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Question {{ loop.index }}</h5>
+                        <span class="badge {% if submission.is_correct %}bg-success{% elif submission.question.question_type == 'essay' %}bg-info{% else %}bg-danger{% endif %}">
+                            {% if submission.question.question_type == 'essay' %}
+                                Essay - Manual Grading
+                            {% elif submission.is_correct %}
+                                Correct
+                            {% else %}
+                                Incorrect
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Question Text -->
+                        <div class="question-text mb-3 p-3 bg-light rounded">
+                            <h6 class="fw-bold">Question:</h6>
+                            <p>{{ submission.question.question_text }}</p>
+                            <p class="text-muted mb-0"><small>Type: {{ submission.question.question_type|replace('_', ' ')|title }} | Points: {{ submission.score }}/{{ submission.question.points }}</small></p>
+                        </div>
+
+                        <!-- Student Answer and Correct Answer -->
+                        <div class="row mt-3">
+                            <!-- Student's Answer -->
+                            <div class="col-md-6">
+                                <div class="student-answer p-3 rounded {% if submission.question.question_type != 'essay' and not submission.is_correct %}border border-danger{% elif submission.is_correct %}border border-success{% else %}border{% endif %}">
+                                    <h6 class="fw-bold">Student's Answer:</h6>
+                                    
+                                    {% if submission.question.question_type == 'essay' %}
+                                        <div class="essay-answer">
+                                            {{ submission.submitted_answer }}
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-sm btn-outline-info check-ai-btn" data-essay-id="{{ submission.id }}">
+                                                <i class="fas fa-robot me-1"></i> Check for AI Content
+                                            </button>
+                                            <div id="ai-result-{{ submission.id }}" class="mt-2 d-none">
+                                                <div class="spinner-border spinner-border-sm text-primary d-none" role="status">
+                                                    <span class="visually-hidden">Loading...</span>
+                                                </div>
+                                                <div class="ai-result-content"></div>
+                                            </div>
+                                        </div>
+                                    
+                                    {% elif submission.question.question_type == 'multiple_choice' %}
+                                        {% if submission.submitted_answer == 'Missing' %}
+                                            <div class="p-3 rounded bg-danger">
+                                                <p class="mb-0 fw-bold text-white">Missing</p>
+                                                <p class="text-white"><small>Student did not answer this question</small></p>
+                                            </div>
+                                        {% elif submission.question.options %}
+                                            <div class="list-group">
+                                                {% for option in submission.question.options %}
+                                                    {% set student_choice = submission.submitted_answer|int == loop.index0 %}
+                                                    {% set correct_choice = submission.question.correct_answer|int == loop.index0 %}
+                                                    <div class="list-group-item {% if student_choice %}{% if submission.is_correct %}list-group-item-success{% else %}list-group-item-danger{% endif %}{% elif correct_choice %}list-group-item-success{% endif %}">
+                                                        {{ option }}
+                                                        {% if student_choice %}
+                                                            <span class="badge {% if submission.is_correct %}bg-success{% else %}bg-danger{% endif %} float-end">
+                                                                Student's Choice
+                                                            </span>
+                                                        {% elif correct_choice %}
+                                                            <span class="badge bg-success float-end">Correct Answer</span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-danger">No options available</p>
+                                        {% endif %}
+                                    
+                                    {% elif submission.question.question_type == 'true_false' %}
+                                        {% if submission.submitted_answer == 'Missing' %}
+                                            <div class="p-3 rounded bg-danger">
+                                                <p class="mb-0 fw-bold text-white">Missing</p>
+                                                <p class="text-white"><small>Student did not answer this question</small></p>
+                                            </div>
+                                        {% else %}
+                                            <div class="list-group">
+                                                <div class="list-group-item {% if submission.submitted_answer == 'true' %}{% if submission.is_correct %}list-group-item-success{% else %}list-group-item-danger{% endif %}{% elif submission.question.correct_answer == 'true' %}list-group-item-success{% endif %}">
+                                                    True
+                                                    {% if submission.submitted_answer == 'true' %}
+                                                        <span class="badge {% if submission.is_correct %}bg-success{% else %}bg-danger{% endif %} float-end">
+                                                            Student's Choice
+                                                        </span>
+                                                    {% elif submission.question.correct_answer == 'true' %}
+                                                        <span class="badge bg-success float-end">Correct Answer</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="list-group-item {% if submission.submitted_answer == 'false' %}{% if submission.is_correct %}list-group-item-success{% else %}list-group-item-danger{% endif %}{% elif submission.question.correct_answer == 'false' %}list-group-item-success{% endif %}">
+                                                    False
+                                                    {% if submission.submitted_answer == 'false' %}
+                                                        <span class="badge {% if submission.is_correct %}bg-success{% else %}bg-danger{% endif %} float-end">
+                                                            Student's Choice
+                                                        </span>
+                                                    {% elif submission.question.correct_answer == 'false' %}
+                                                        <span class="badge bg-success float-end">Correct Answer</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    
+                                    {% elif submission.question.question_type == 'identification' %}
+                                        <div class="p-3 rounded {% if submission.is_correct %}bg-success-subtle{% elif submission.submitted_answer == 'Missing' %}bg-danger{% else %}bg-danger-subtle{% endif %}">
+                                            <p class="mb-0 fw-bold {% if submission.is_correct %}text-success{% elif submission.submitted_answer == 'Missing' %}text-white{% else %}text-danger{% endif %}">
+                                                {{ submission.submitted_answer }}
+                                            </p>
+                                        </div>
+                                    
+                                    {% else %}
+                                        <div class="p-3 rounded {% if submission.is_correct %}bg-success-subtle{% elif submission.submitted_answer == 'Missing' %}bg-danger{% else %}bg-danger-subtle{% endif %}">
+                                            <p class="mb-0 {% if submission.is_correct %}text-success{% elif submission.submitted_answer == 'Missing' %}text-white{% else %}text-danger{% endif %}">
+                                                {{ submission.submitted_answer }}
+                                            </p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Correct Answer -->
+                            <div class="col-md-6">
+                                <div class="correct-answer p-3 rounded border border-success">
+                                    <h6 class="fw-bold">Correct Answer:</h6>
+                                    
+                                    {% if submission.question.question_type == 'essay' %}
+                                        <div class="sample-answer">
+                                            <p class="text-muted"><small>(Sample Answer - For Reference Only)</small></p>
+                                            {{ submission.question.correct_answer }}
+                                        </div>
+                                    
+                                    {% elif submission.question.question_type == 'multiple_choice' or submission.question.question_type == 'true_false' %}
+                                        <p class="text-success"><em>Correct answer highlighted in the options list</em></p>
+                                    
+                                    {% elif submission.question.question_type == 'identification' and not submission.is_correct %}
+                                        <p class="text-success fw-bold">{{ submission.question.correct_answer }}</p>
+                                    
+                                    {% elif submission.question.question_type == 'identification' and submission.is_correct %}
+                                        <p class="text-success"><em>Student's answer is correct</em></p>
+                                    
+                                    {% else %}
+                                        <p class="text-success fw-bold">{{ submission.question.correct_answer }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-warning">
+                    <h5>No question submissions found</h5>
+                    <p>This could be due to one of the following reasons:</p>
+                    <ul>
+                        <li>The student didn't answer any questions</li>
+                        <li>There was an error during submission process</li>
+                        <li>The submissions were not properly linked to this quiz submission</li>
+                    </ul>
+                    
+                    <h5 class="mt-4">Quiz Questions</h5>
+                    <div class="list-group">
+                        {% for question in quiz_submission.quiz.questions %}
+                            <div class="list-group-item">
+                                <h6>Question {{ loop.index }}: {{ question.question_text }}</h6>
+                                <p class="text-muted">Type: {{ question.question_type|replace('_', ' ')|title }} | Points: {{ question.points }}</p>
+                                
+                                {% if question.question_type == 'multiple_choice' and question.options %}
+                                    <div class="mt-2">
+                                        <strong>Options:</strong>
+                                        <ol>
+                                            {% for option in question.options %}
+                                                <li>{{ option }} {% if loop.index0|string == question.correct_answer %}<span class="badge bg-success">Correct</span>{% endif %}</li>
+                                            {% endfor %}
+                                        </ol>
+                                    </div>
+                                {% elif question.question_type != 'essay' %}
+                                    <div class="mt-2">
+                                        <strong>Correct Answer:</strong> {{ question.correct_answer }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Grading Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h4 class="mb-0">Grade Submission</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('grade_submission', submission_id=quiz_submission.id) }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label for="score" class="form-label">Total Score</label>
+                    {{ form.score(class="form-control", id="score") }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="feedback" class="form-label">Feedback</label>
+                    {{ form.feedback(class="form-control", id="feedback", rows=4) }}
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ form.visible_to_students(class="form-check-input", id="visible_to_students") }}
+                    <label class="form-check-label" for="visible_to_students">Make visible to student</label>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    {{ form.show_answers(class="form-check-input", id="show_answers") }}
+                    <label class="form-check-label" for="show_answers">Show correct answers to student</label>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Submit Grades</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- AI Content Detection Modal -->
+<div class="modal fade" id="aiContentModal" tabindex="-1" aria-labelledby="aiContentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aiContentModalLabel">AI Content Detection Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="aiModalContent">
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // AI Content Detection
+        const checkAiButtons = document.querySelectorAll('.check-ai-btn');
+        
+        checkAiButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const essayId = this.getAttribute('data-essay-id');
+                const resultDiv = document.getElementById(`ai-result-${essayId}`);
+                const spinner = resultDiv.querySelector('.spinner-border');
+                const resultContent = resultDiv.querySelector('.ai-result-content');
+                
+                // Show the result div and spinner
+                resultDiv.classList.remove('d-none');
+                spinner.classList.remove('d-none');
+                
+                // Make AJAX request to check AI content
+                fetch(`/check_ai_content/${essayId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => {
+                    // Always try to parse JSON first, even for error responses
+                    return response.json().catch(e => {
+                        // If JSON parsing fails, throw a more descriptive error
+                        throw new Error(`Failed to parse server response: ${e.message}. Status: ${response.status}`);
+                    }).then(data => {
+                        // If the response contains an error field, throw it as an error
+                        if (!response.ok) {
+                            throw new Error(data.error || `Server returned ${response.status}: ${response.statusText}`);
+                        }
+                        return data;
+                    });
+                })
+                .then(data => {
+                    // Hide spinner
+                    spinner.classList.add('d-none');
+                    
+                    // Create result HTML
+                    let resultHTML = `
+                        <div class="alert alert-${data.level || 'info'} mt-2">
+                            <h6 class="alert-heading">AI Detection Score: ${data.score || 0}%</h6>
+                            <p>${data.confidence || 'Analysis completed'}</p>
+                            <hr>
+                            <div class="ai-features">
+                                <p class="mb-1"><small><strong>Analysis Details:</strong></small></p>
+                                <ul class="list-unstyled small">
+                                    ${data.features ? data.features.map(feature => 
+                                        `<li><small>${feature.name}: ${feature.value}</small></li>`
+                                    ).join('') : '<li><small>No detailed features available</small></li>'}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Update result content
+                    resultContent.innerHTML = resultHTML;
+                })
+                .catch(error => {
+                    // Hide spinner
+                    spinner.classList.add('d-none');
+                    
+                    // Show error message
+                    console.error('AI detection error:', error);
+                    
+                    // Create a more detailed error message
+                    let errorMessage = error.message || 'Unknown error';
+                    
+                    // Provide a user-friendly message
+                    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+                        errorMessage = 'Network error. Please check your internet connection and try again.';
+                    } else if (errorMessage.includes('INTERNAL SERVER ERROR') || errorMessage.includes('500')) {
+                        errorMessage = 'The AI detection service encountered an error. Please try again later.';
+                    }
+                    
+                    resultContent.innerHTML = `
+                        <div class="alert alert-danger mt-2">
+                            <p>Error checking AI content: ${errorMessage}</p>
+                            <small>If this error persists, please contact the administrator.</small>
+                        </div>
+                    `;
+                });
+                
+                // Prevent default button behavior
+                return false;
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ subject.name }}</h2>
+    <p class="text-muted">Subject Code: {{ subject.subject_code }}</p>
+
+    <div class="row mt-4">
+        <!-- Enrolled Students Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Enrolled Students</h4>
+                </div>
+                <div class="card-body">
+                    {% if subject.enrolled_students %}
+                        <div class="list-group">
+                        {% for student in subject.enrolled_students %}
+                            <div class="list-group-item">
+                                {{ student.username }}
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No students enrolled yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quizzes Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Quizzes and Exams</h4>
+                </div>
+                <div class="card-body">
+                    {% if subject.quizzes %}
+                        <div class="list-group">
+                        {% for quiz in subject.quizzes %}
+                            <div class="list-group-item">
+                                <h5>{{ quiz.title }}</h5>
+                                <p class="mb-1">Type: {{ quiz.quiz_type|title }}</p>
+                                {% if quiz.start_time %}
+                                    <p class="mb-1">Start Time: {{ quiz.start_time.strftime('%Y-%m-%d %H:%M') }}</p>
+                                {% endif %}
+                                {% if quiz.duration %}
+                                    <p class="mb-1">Duration: {{ quiz.duration }} minutes</p>
+                                {% endif %}
+                                <a href="{{ url_for('quiz.view_quiz', quiz_id=quiz.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No quizzes or exams created yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mt-4">
+        {% if current_user.role == 'teacher' and subject.teacher_id == current_user.id %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Manage Enrollments</a>
+        {% endif %}
+        {% if current_user.role == 'student' %}
+        <form action="{{ url_for('subject.drop_subject', subject_id=subject.id) }}" method="POST" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to drop this subject? This action cannot be undone.')">
+                Drop Subject
+            </button>
+        </form>
+        {% endif %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

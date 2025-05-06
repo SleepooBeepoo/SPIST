@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Imported Questions - {{ quiz.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Review Imported Questions for {{ quiz.title }}</h1>
+    <p class="lead">Review and edit the questions extracted from your document before finalizing.</p>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Batch Operations</h5>
+        </div>
+        <div class="card-body">
+            <p>Select questions to perform batch operations:</p>
+            
+            <form id="batch-form" method="POST" action="{{ url_for('import_document.batch_delete', quiz_id=quiz.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" id="select-all-btn">Select All</button>
+                    <button type="button" class="btn btn-secondary" id="deselect-all-btn">Deselect All</button>
+                </div>
+                
+                <div class="mb-3">
+                    <button type="button" class="btn btn-danger" id="batch-delete-btn">Delete Selected</button>
+                    <button type="button" class="btn btn-warning" id="batch-edit-btn">Edit Selected</button>
+                    <button type="submit" class="btn btn-success">Save All Questions</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Imported Questions</h5>
+        </div>
+        <div class="card-body">
+            {% if questions %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%">Select</th>
+                                <th width="5%">#</th>
+                                <th width="40%">Question</th>
+                                <th width="15%">Type</th>
+                                <th width="10%">Points</th>
+                                <th width="25%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for question in questions %}
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input question-checkbox" type="checkbox" 
+                                                   name="selected_questions" value="{{ question.id }}" 
+                                                   id="question-{{ question.id }}">
+                                        </div>
+                                    </td>
+                                    <td>{{ loop.index }}</td>
+                                    <td class="question-text">{{ question.question_text }}</td>
+                                    <td class="question-type">{{ question.question_type|replace('_', ' ')|title }}</td>
+                                    <td class="question-points">{{ question.points }}</td>
+                                    <td>
+                                        <!-- Individual edit/delete buttons removed in favor of batch operations -->
+                                        <span class="text-muted">Use batch operations above</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">No questions found for this quiz.</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-4">
+        <form method="POST" action="{{ url_for('import_document.finish_import', quiz_id=quiz.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success">Finish Import</button>
+        </form>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary ms-2">Return to Dashboard</a>
+    </div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="delete-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the selected question(s)? This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Question Modal -->
+    <div class="modal fade" id="edit-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Edit Question</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="edit-modal-body">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select/Deselect All functionality
+        document.getElementById('select-all-btn').addEventListener('click', function() {
+            document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+        
+        document.getElementById('deselect-all-btn').addEventListener('click', function() {
+            document.querySelectorAll('.question-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+        
+        // Batch Delete functionality
+        document.getElementById('batch-delete-btn').addEventListener('click', function() {
+            const selectedCount = document.querySelectorAll('.question-checkbox:checked').length;
+            if (selectedCount === 0) {
+                alert('Please select at least one question to delete.');
+                return;
+            }
+            
+            // Show confirmation modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('delete-modal'));
+            deleteModal.show();
+        });
+        
+        // Confirm Delete button
+        document.getElementById('confirm-delete-btn').addEventListener('click', function() {
+            const form = document.getElementById('batch-form');
+            form.action = "{{ url_for('import_document.batch_delete', quiz_id=quiz.id) }}";
+            form.submit();
+        });
+        
+        // Batch Edit functionality
+        document.getElementById('batch-edit-btn').addEventListener('click', function() {
+            const selectedCount = document.querySelectorAll('.question-checkbox:checked').length;
+            if (selectedCount === 0) {
+                alert('Please select at least one question to edit.');
+                return;
+            }
+            
+            if (selectedCount === 1) {
+                // If only one question is selected, open the edit modal for that question
+                const selectedCheckbox = document.querySelector('.question-checkbox:checked');
+                const questionId = selectedCheckbox.value;
+                openEditModalForQuestion(questionId);
+            } else {
+                // If multiple questions are selected, submit the form to batch update
+                const form = document.getElementById('batch-form');
+                form.action = "{{ url_for('import_document.update_questions', quiz_id=quiz.id) }}";
+                form.submit();
+            }
+        });
+        
+        // Individual button handlers removed as we're using batch operations only
+        // Batch edit modal setup for when a single question is selected
+        function openEditModalForQuestion(questionId) {
+            const questionRow = document.getElementById('question-' + questionId).closest('tr');
+            const questionText = questionRow.querySelector('.question-text').textContent.trim();
+            const questionType = questionRow.querySelector('.question-type').textContent.trim();
+            const points = questionRow.querySelector('.question-points').textContent.trim();
+            
+            document.getElementById('edit-modal-body').innerHTML = `
+                <form method="POST" action="{{ url_for('import_document.update_questions', quiz_id=quiz.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="selected_questions" value="${questionId}">
+                    <div class="mb-3">
+                        <label for="question_text_${questionId}" class="form-label">Question Text</label>
+                        <textarea class="form-control" id="question_text_${questionId}" name="question_text" rows="3" required>${questionText}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="points_${questionId}" class="form-label">Points</label>
+                        <input type="number" class="form-control" id="points_${questionId}" name="points" min="0" step="0.5" value="${points}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </form>
+            `;
+            
+            // Show edit modal
+            const editModal = new bootstrap.Modal(document.getElementById('edit-modal'));
+            editModal.show();
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

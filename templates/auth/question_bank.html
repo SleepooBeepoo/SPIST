@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Question Bank</h2>
+    {% if questions %}
+        <div class="list-group">
+            {% for question in questions %}
+                <div class="list-group-item">
+                    <h5>{{ question.question_text }}</h5>
+                    <small class="text-muted">Created: {{ question.created_at.strftime('%Y-%m-%d') }}</small>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            No questions have been created yet. Click "Add Question" to get started.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

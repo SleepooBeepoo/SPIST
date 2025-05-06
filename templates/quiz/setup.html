@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-white">Create Quiz/Exam - Step 1: Basic Setup</h2>
+        <a href="{{ url_for('import_document.import_document') }}" class="btn btn-primary">Use Document Import Tool</a>
+    </div>
+    <div class="alert alert-info">
+        <strong>Having trouble with document import?</strong> Try our new dedicated document import tool that provides a more reliable way to import questions from documents.
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('quiz.create_quiz') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <label for="title" class="form-label">Quiz/Exam Title</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ form.title.data or '' }}" required>
+                    {% if form.title.errors %}
+                        <div class="text-danger">
+                            {% for error in form.title.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="subject_id" class="form-label">Subject</label>
+                    <select class="form-control" id="subject_id" name="subject_id" required>
+                        {% for value, label in form.subject_id.choices %}
+                            <option value="{{ value }}" {% if form.subject_id.data == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.subject_id.errors %}
+                        <div class="text-danger">
+                            {% for error in form.subject_id.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="quiz_type" class="form-label">Type</label>
+                    <select class="form-control" id="quiz_type" name="quiz_type" required>
+                        {% for value, label in form.quiz_type.choices %}
+                            <option value="{{ value }}" {% if form.quiz_type.data == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.quiz_type.errors %}
+                        <div class="text-danger">
+                            {% for error in form.quiz_type.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Creation Method Selection -->
+                <div class="mb-3">
+                    <label for="creation_method" class="form-label">Creation Method</label>
+                    <select class="form-control" id="creation_method" name="creation_method" onchange="toggleCreationMethod()">
+                        {% for value, label in form.creation_method.choices %}
+                            <option value="{{ value }}" {% if form.creation_method.data == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Manual Creation Options -->
+                <div id="manual_options">
+                    <div class="mb-3">
+                        <label for="question_count" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control" id="question_count" name="question_count" min="1" max="50" value="{{ form.question_count.data or '' }}">
+                        {% if form.question_count.errors %}
+                            <div class="text-danger">
+                                {% for error in form.question_count.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Document Import Options -->
+                <div id="import_options" style="display: none;">
+                    <div class="mb-3">
+                        <label for="document_file" class="form-label">Upload Document (.docx or .pdf)</label>
+                        <input type="file" class="form-control" id="document_file" name="document_file" accept=".docx,.pdf">
+                        {% if form.document_file.errors %}
+                            <div class="text-danger">
+                                {% for error in form.document_file.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="text-muted">Upload a document containing questions to import</small>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="use_ai" name="use_ai" {% if form.use_ai.data %}checked{% endif %}>
+                        <label class="form-check-label" for="use_ai">Use AI to analyze document (recommended)</label>
+                        <div class="form-text">AI helps extract questions more accurately from complex documents</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description (Optional)</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.data or '' }}</textarea>
+                    {% if form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="duration" class="form-label">Time Limit (minutes)</label>
+                    <input type="number" class="form-control" id="duration" name="duration" min="1" value="{{ form.duration.data or '' }}">
+                    <small class="text-muted">Leave empty for no time limit</small>
+                    {% if form.duration.errors %}
+                        <div class="text-danger">
+                            {% for error in form.duration.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="start_time" class="form-label">Start Time (Optional)</label>
+                    <input type="datetime-local" class="form-control" id="start_time" name="start_time" value="{{ form.start_time.data or '' }}">
+                    <small class="text-muted">When the quiz/exam becomes available to students</small>
+                    {% if form.start_time.errors %}
+                        <div class="text-danger">
+                            {% for error in form.start_time.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" id="submit_button">Continue</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleCreationMethod() {
+        const creationMethod = document.getElementById('creation_method').value;
+        const manualOptions = document.getElementById('manual_options');
+        const importOptions = document.getElementById('import_options');
+        const submitButton = document.getElementById('submit_button');
+        
+        if (creationMethod === 'manual') {
+            manualOptions.style.display = 'block';
+            importOptions.style.display = 'none';
+            submitButton.textContent = 'Continue to Add Questions';
+        } else {
+            manualOptions.style.display = 'none';
+            importOptions.style.display = 'block';
+            submitButton.textContent = 'Import Questions';
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleCreationMethod();
+    });
+</script>
+{% endblock %}

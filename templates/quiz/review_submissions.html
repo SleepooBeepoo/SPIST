@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Review Student Submissions</h2>
+    <div class="alert alert-info">
+        <p>Review and grade student submissions for identification and essay questions. Multiple choice and true/false questions are automatically graded by the system.</p>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>{{ quiz.title }}</h4>
+            <p class="text-muted mb-0">{{ quiz.description }}</p>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <span class="badge bg-primary">{{ quiz.subject.name }}</span>
+                    <span class="badge bg-secondary">{{ quiz.quiz_type|title }}</span>
+                </div>
+                <div>
+                    <a href="{{ url_for('quiz.view_quiz', quiz_id=quiz.id) }}" class="btn btn-outline-secondary">Back to Quiz</a>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h5 class="card-title">Grading Status</h5>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Total Submissions:</span>
+                                <span class="fw-bold">{{ submissions|length }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Pending Review:</span>
+                                <span class="fw-bold text-warning">{{ pending_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Manually Graded:</span>
+                                <span class="fw-bold text-success">{{ graded_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Auto Graded:</span>
+                                <span class="fw-bold text-info">{{ auto_graded_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="alert alert-warning">
+                        <h5>Grading Guidelines</h5>
+                        <p>Please follow these guidelines when grading submissions:</p>
+                        <ul>
+                            <li>For <strong>identification questions</strong>, consider acceptable variations in spelling, capitalization, and synonyms.</li>
+                            <li>For <strong>essay questions</strong>, evaluate based on content accuracy, reasoning, organization, and writing mechanics.</li>
+                            <li>Provide constructive feedback to help students understand their performance.</li>
+                            <li>Be consistent in your grading criteria across all submissions.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <ul class="nav nav-tabs mb-4" id="submissionTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="true">
+                Pending Review <span class="badge bg-warning">{{ pending_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="graded-tab" data-bs-toggle="tab" data-bs-target="#graded" type="button" role="tab" aria-controls="graded" aria-selected="false">
+                Graded <span class="badge bg-success">{{ graded_count + auto_graded_count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="false">
+                All Submissions <span class="badge bg-secondary">{{ submissions|length }}</span>
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="submissionTabsContent">
+        <!-- Pending Review Tab -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+            {% if pending_submissions %}
+                {% for submission in pending_submissions %}
+                    {{ render_submission_card(submission, True) }}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-success">No submissions pending review!</div>
+            {% endif %}
+        </div>
+        
+        <!-- Graded Tab -->
+        <div class="tab-pane fade" id="graded" role="tabpanel" aria-labelledby="graded-tab">
+            {% if graded_submissions %}
+                {% for submission in graded_submissions %}
+                    {{ render_submission_card(submission, False) }}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">No graded submissions yet.</div>
+            {% endif %}
+        </div>
+        
+        <!-- All Submissions Tab -->
+        <div class="tab-pane fade" id="all" role="tabpanel" aria-labelledby="all-tab">
+            {% if submissions %}
+                {% for submission in submissions %}
+                    {{ render_submission_card(submission, not submission.graded) }}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">No submissions for this quiz yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Submission Card Macro -->
+{% macro render_submission_card(submission, editable) %}
+<div class="card mb-3 submission-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0">{{ submission.student.username }}</h5>
+            <small class="text-muted">Submitted: {{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') }}</small>
+        </div>
+        <div>
+            {% if submission.graded %}
+                {% if submission.question.question_type in ['multiple_choice', 'true_false'] %}
+                    <span class="badge bg-info">Auto Graded</span>
+                {% else %}
+                    <span class="badge bg-success">Manually Graded</span>
+                {% endif %}
+            {% else %}
+                <span class="badge bg-warning">Pending Review</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <h6>Question:</h6>
+        <p>{{ submission.question.question_text }}</p>
+        
+        <h6>Student's Answer:</h6>
+        <div class="p-3 bg-light rounded mb-3">
+            {% if submission.question.question_type == 'essay' %}
+                <div class="essay-answer">{{ submission.submitted_answer }}</div>
+                {% if submission.question.word_limit %}
+                    <small class="text-muted">Word count: {{ submission.submitted_answer.split()|length }} / {{ submission.question.word_limit }}</small>
+                {% endif %}
+            {% else %}
+                <p class="mb-0">{{ submission.submitted_answer }}</p>
+            {% endif %}
+        </div>
+        
+        {% if submission.question.question_type == 'identification' %}
+            <h6>Correct Answer:</h6>
+            <p>{{ submission.question.correct_answer }}</p>
+        {% endif %}
+        
+        <form method="POST" action="{{ url_for('quiz.grade_submission', submission_id=submission.id) }}" class="grading-form" {% if not editable %}style="display: none;"{% endif %}>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="submission_id" value="{{ submission.id }}">
+            
+            <div class="mb-3">
+                <label for="score-{{ submission.id }}" class="form-label">Score (max: {{ submission.question.points }})</label>
+                <input type="number" class="form-control" id="score-{{ submission.id }}" name="score" 
+                       min="0" max="{{ submission.question.points }}" step="0.1" 
+                       value="{{ submission.score }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="feedback-{{ submission.id }}" class="form-label">Feedback</label>
+                <textarea class="form-control" id="feedback-{{ submission.id }}" name="feedback" rows="3">{{ submission.feedback }}</textarea>
+            </div>
+            
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="is-correct-{{ submission.id }}" name="is_correct" {% if submission.is_correct %}checked{% endif %}>
+                <label class="form-check-label" for="is-correct-{{ submission.id }}">
+                    Mark as correct
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Grading</button>
+            {% if editable %}
+                <button type="button" class="btn btn-outline-secondary cancel-grading-btn">Cancel</button>
+            {% endif %}
+        </form>
+        
+        <div class="grading-result" {% if editable %}style="display: none;"{% endif %}>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Score:</h6>
+                <span class="badge {% if submission.is_correct %}bg-success{% else %}bg-danger{% endif %} p-2">
+                    {{ submission.score }} / {{ submission.question.points }}
+                </span>
+            </div>
+            
+            {% if submission.feedback %}
+                <h6>Feedback:</h6>
+                <div class="p-3 bg-light rounded">
+                    {{ submission.feedback }}
+                </div>
+            {% endif %}
+            
+            {% if editable == false %}
+                <button type="button" class="btn btn-outline-primary mt-3 edit-grading-btn">Edit Grading</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle between grading form and result display
+        document.querySelectorAll('.edit-grading-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.submission-card');
+                card.querySelector('.grading-form').style.display = 'block';
+                card.querySelector('.grading-result').style.display = 'none';
+            });
+        });
+        
+        document.querySelectorAll('.cancel-grading-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const card = this.closest('.submission-card');
+                card.querySelector('.grading-form').style.display = 'none';
+                card.querySelector('.grading-result').style.display = 'block';
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-white">Welcome, {{ current_user.username }}!</h1>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-info">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if current_user.role == 'teacher' %}
+    <!-- Quick Actions Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">Quick Actions</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Create Quiz Card -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">Create Quiz/Exam</h5>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text">Create a new quiz or exam for your students with multiple question types.</p>
+                            <div class="mt-auto">
+                                <a href="{{ url_for('quiz.create_quiz') }}" class="btn btn-success">Create Quiz/Exam</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Import Document Card -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">Import Questions from Document</h5>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text">Upload a document file (.docx or .pdf) to automatically extract questions for your quiz or exam.</p>
+                            <div class="mt-auto">
+                                <a href="{{ url_for('import_document.import_document') }}" class="btn btn-primary">Import Document</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Create Subject Card -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">Create Subject</h5>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text">Create a new subject for your classes and manage student enrollments.</p>
+                            <div class="mt-auto">
+                                <a href="{{ url_for('subject.create_subject') }}" class="btn btn-info">Create Subject</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Subjects Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">My Subjects</h3>
+        </div>
+        <div class="card-body">
+            {% if current_user.role == 'teacher' %}
+                {% if current_user.subjects_taught %}
+                    <div class="row">
+                        {% for subject in current_user.subjects_taught %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ subject.name }}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">Code: {{ subject.subject_code }}</h6>
+                                        <p class="card-text small">Created: {{ subject.created_at.strftime('%Y-%m-%d') }}</p>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <div class="d-flex justify-content-between">
+                                            <a href="{{ url_for('subject.view_subject', subject_id=subject.id) }}" class="btn btn-success">View</a>
+                                            <a href="{{ url_for('subject.import_students', subject_id=subject.id) }}" class="btn btn-sm btn-outline-success">Import Students</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        You haven't created any subjects yet. Click the "Create Subject" button to get started!
+                    </div>
+                {% endif %}
+            {% elif current_user.role == 'student' %}
+                <!-- Enrollment Card - Always visible -->
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="card-title mb-0">Join a Class</h5>
+                            </div>
+                            <div class="card-body text-center">
+                                {% if not current_user.enrolled_subjects %}
+                                    <p class="card-text">You are not enrolled in any subjects yet.</p>
+                                {% endif %}
+                                <p class="card-text">Enter a subject code to join a class.</p>
+                                <a href="{{ url_for('subject.enroll_by_code') }}" class="btn btn-success">
+                                    <i class="fas fa-plus-circle"></i> Enroll with Subject Code
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enrolled Subjects -->
+                {% if current_user.enrolled_subjects %}
+                    <div class="row">
+                        {% for subject in current_user.enrolled_subjects %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ subject.name }}</h5>
+                                        <h6 class="card-subtitle mb-2 text-muted">Code: {{ subject.subject_code }}</h6>
+                                        <p class="card-text small">Teacher: {{ subject.teacher.username }}</p>
+                                    </div>
+                                    <div class="card-footer bg-transparent">
+                                        <a href="{{ url_for('subject.view_subject', subject_id=subject.id) }}" class="btn btn-success">View</a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Questions Section Removed -->
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+<form method="POST" action="{{ url_for('batch_operations.update_question', question_id=question.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="mb-3">
+        <label for="question_text{{ question.id }}" class="form-label">Question Text</label>
+        <textarea class="form-control" id="question_text{{ question.id }}" name="question_text" rows="3" required>{{ question.question_text }}</textarea>
+    </div>
+    
+    <div class="mb-3">
+        <label for="question_type{{ question.id }}" class="form-label">Question Type</label>
+        <select class="form-select" id="question_type{{ question.id }}" name="question_type" required onchange="toggleQuestionOptions(this, {{ question.id }})">
+            <option value="multiple_choice" {% if question.question_type == 'multiple_choice' %}selected{% endif %}>Multiple Choice</option>
+            <option value="identification" {% if question.question_type == 'identification' %}selected{% endif %}>Identification</option>
+            <option value="true_false" {% if question.question_type == 'true_false' %}selected{% endif %}>True/False</option>
+            <option value="essay" {% if question.question_type == 'essay' %}selected{% endif %}>Essay</option>
+        </select>
+    </div>
+    
+    <!-- Multiple Choice Options -->
+    <div id="multiple_choice_options{{ question.id }}" class="question-options" {% if question.question_type != 'multiple_choice' %}style="display: none;"{% endif %}>
+        {% set options = question.options or [] %}
+        {% for i in range(5) %}
+            <div class="mb-2">
+                <label for="option{{ i+1 }}{{ question.id }}" class="form-label">Option {{ i+1 }}</label>
+                <input type="text" class="form-control" id="option{{ i+1 }}{{ question.id }}" name="option{{ i+1 }}" value="{{ options[i] if i < options|length else '' }}">
+            </div>
+        {% endfor %}
+        
+        <div class="mb-3">
+            <label for="correct_option{{ question.id }}" class="form-label">Correct Answer</label>
+            <select class="form-select" id="correct_option{{ question.id }}" name="correct_option">
+                {% for i in range(5) %}
+                    <option value="{{ i }}" {% if question.correct_answer == i|string %}selected{% endif %}>Option {{ i+1 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    
+    <!-- True/False Options -->
+    <div id="true_false_options{{ question.id }}" class="question-options" {% if question.question_type != 'true_false' %}style="display: none;"{% endif %}>
+        <div class="mb-3">
+            <label for="true_false_answer{{ question.id }}" class="form-label">Correct Answer</label>
+            <select class="form-select" id="true_false_answer{{ question.id }}" name="true_false_answer">
+                <option value="true" {% if question.correct_answer == 'true' %}selected{% endif %}>True</option>
+                <option value="false" {% if question.correct_answer == 'false' %}selected{% endif %}>False</option>
+            </select>
+        </div>
+    </div>
+    
+    <!-- Identification Options -->
+    <div id="identification_options{{ question.id }}" class="question-options" {% if question.question_type != 'identification' %}style="display: none;"{% endif %}>
+        <div class="mb-3">
+            <label for="correct_answer{{ question.id }}" class="form-label">Correct Answer</label>
+            <input type="text" class="form-control" id="correct_answer{{ question.id }}" name="correct_answer" value="{{ question.correct_answer }}">
+        </div>
+    </div>
+    
+    <!-- Essay Options -->
+    <div id="essay_options{{ question.id }}" class="question-options" {% if question.question_type != 'essay' %}style="display: none;"{% endif %}>
+        <div class="mb-3">
+            <label for="word_limit{{ question.id }}" class="form-label">Word Limit</label>
+            <input type="number" class="form-control" id="word_limit{{ question.id }}" name="word_limit" value="{{ question.word_limit or 500 }}" min="1">
+        </div>
+    </div>
+    
+    <div class="mb-3">
+        <label for="points{{ question.id }}" class="form-label">Points</label>
+        <input type="number" class="form-control" id="points{{ question.id }}" name="points" value="{{ question.points or 1 }}" min="1" max="100">
+    </div>
+    
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div>
+</form>

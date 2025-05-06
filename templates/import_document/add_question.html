@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Question{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Add Question</h1>
+    <p class="lead">Quiz: {{ quiz.title }} ({{ quiz.quiz_type|capitalize }})</p>
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="POST">
+                {{ form.csrf_token }}
+                {{ form.quiz_id }}
+                
+                <div class="mb-3">
+                    {{ form.question_text.label(class="form-label") }}
+                    {{ form.question_text(class="form-control", rows=3) }}
+                    {% if form.question_text.errors %}
+                        <div class="text-danger">
+                            {% for error in form.question_text.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        {{ form.question_type.label(class="form-label") }}
+                        {{ form.question_type(class="form-select", onchange="toggleQuestionType()") }}
+                        {% if form.question_type.errors %}
+                            <div class="text-danger">
+                                {% for error in form.question_type.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.points.label(class="form-label") }}
+                        {{ form.points(class="form-control", type="number") }}
+                        {% if form.points.errors %}
+                            <div class="text-danger">
+                                {% for error in form.points.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Multiple Choice Options -->
+                <div id="multiple_choice_options" class="question-options" style="display: none;">
+                    <div class="mb-3">
+                        <label class="form-label">Options</label>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">1</span>
+                            {{ form.option1(class="form-control", placeholder="Option 1") }}
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">2</span>
+                            {{ form.option2(class="form-control", placeholder="Option 2") }}
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">3</span>
+                            {{ form.option3(class="form-control", placeholder="Option 3") }}
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">4</span>
+                            {{ form.option4(class="form-control", placeholder="Option 4") }}
+                        </div>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">5</span>
+                            {{ form.option5(class="form-control", placeholder="Option 5 (Optional)") }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.correct_option.label(class="form-label") }}
+                        {{ form.correct_option(class="form-select") }}
+                        {% if form.correct_option.errors %}
+                            <div class="text-danger">
+                                {% for error in form.correct_option.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Identification Answer -->
+                <div id="identification_options" class="question-options" style="display: none;">
+                    <div class="mb-3">
+                        {{ form.correct_answer.label(class="form-label") }}
+                        {{ form.correct_answer(class="form-control") }}
+                        {% if form.correct_answer.errors %}
+                            <div class="text-danger">
+                                {% for error in form.correct_answer.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- True/False Answer -->
+                <div id="true_false_options" class="question-options" style="display: none;">
+                    <div class="mb-3">
+                        {{ form.correct_answer.label(class="form-label") }}
+                        <select class="form-select" name="correct_answer">
+                            <option value="true">True</option>
+                            <option value="false">False</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Essay Options -->
+                <div id="essay_options" class="question-options" style="display: none;">
+                    <div class="mb-3">
+                        {{ form.word_limit.label(class="form-label") }}
+                        {{ form.word_limit(class="form-control", type="number") }}
+                        {% if form.word_limit.errors %}
+                            <div class="text-danger">
+                                {% for error in form.word_limit.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('import_document.review_questions', quiz_id=quiz.id) }}" class="btn btn-secondary">Back to Review</a>
+                    <button type="submit" class="btn btn-primary">Add Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show/hide question type options based on selection
+    function toggleQuestionType() {
+        const questionType = document.getElementById('question_type').value;
+        
+        // Hide all option divs
+        document.querySelectorAll('.question-options').forEach(div => {
+            div.style.display = 'none';
+        });
+        
+        // Show the selected option div
+        const optionsDiv = document.getElementById(`${questionType}_options`);
+        if (optionsDiv) {
+            optionsDiv.style.display = 'block';
+        }
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleQuestionType();
+    });
+</script>
+{% endblock %}

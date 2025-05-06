@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Students{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4>Import Students for {{ subject.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p><strong>Instructions:</strong></p>
+                        <ul>
+                            <li>Upload a CSV file containing student information</li>
+                            <li>The CSV must have columns: Full Name, Course and Year, Student Email, Subject Code</li>
+                            <li>Only students with the subject code <strong>{{ subject.subject_code }}</strong> will be imported</li>
+                            <li>Student emails must end with @spist.edu</li>
+                            <li>New student accounts will be created with default password: <strong>changeme</strong></li>
+                        </ul>
+                        <p>Need a template? <a href="{{ url_for('subject.download_csv_template') }}" class="btn btn-sm btn-outline-primary">Download CSV Template</a></p>
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        <div class="form-group mb-3">
+                            {{ form.csv_file.label(class="form-label") }}
+                            {{ form.csv_file(class="form-control") }}
+                            {% if form.csv_file.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.csv_file.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
