@@ -1,0 +1,72 @@
+/* Tetris Game Styles */
+
+.game-container {
+    margin: 0 auto;
+    position: relative;
+}
+
+canvas#tetris {
+    background-color: #f0f0f0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    display: block;
+}
+
+#score {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #007bff;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    transform: scale(1.05);
+}
+
+/* Animation for the "Bored? Click Me!" button */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.btn-warning {
+    animation: pulse 2s infinite;
+}
+
+/* Game controls explanation */
+.controls-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.controls-info h5 {
+    margin-bottom: 10px;
+    color: #343a40;
+}
+
+.controls-info ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.controls-info li {
+    margin-bottom: 5px;
+}

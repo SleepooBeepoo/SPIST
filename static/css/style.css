@@ -1,0 +1,68 @@
+body {
+    background: url("/static/img/spist.jpg") no-repeat center center fixed;
+    background-size: cover;
+}
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.card {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid rgba(0,0,0,.125);
+    padding: 1.5rem;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.btn-primary {
+    padding: 0.5rem 2rem;
+}
+
+.alert {
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+    border-color: #80bdff;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.content-overlay {
+    background-color: rgba(255, 255, 255, 0.95); /* white with slight transparency */
+    padding: 30px;
+    margin: 40px auto;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    max-width: 1000px;
+}
+
+.home-box {
+    background-color: rgba(0, 128, 0, 0.6); /* transparent green */
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
+}
+
+.home-box .btn-outline-light {
+    border: 2px solid white;
+    color: white;
+}
+
+.home-box .btn-outline-light:hover {
+    background-color: white;
+    color: green;
+}
